@@ -1,5 +1,9 @@
 import { Router, type Request, type Response } from "express";
-import { zStudentPostBody, zStudentId } from "../libs/zodValidators.js";
+import {
+  zStudentPostBody,
+  zStudentId,
+  zStudentPutBody,
+} from "../libs/zodValidators.js";
 
 import type { Student, CustomRequest } from "../libs/types.js";
 
@@ -177,6 +181,127 @@ router.post(
       return res.status(500).json({
         success: false,
         message: "Somthing is wrong, please try again",
+        error: err,
+      });
+    }
+  },
+);
+
+router.put(
+  "/",
+  authenticateToken,
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const parsed = zStudentPutBody.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: parsed.error.issues,
+        });
+      }
+
+      const { studentId, ...rawUpdates } = parsed.data;
+      const updates = Object.fromEntries(
+        Object.entries(rawUpdates).filter(
+          ([, value]) => value !== null && value !== undefined,
+        ),
+      ) as Partial<{
+        firstName: string;
+        lastName: string;
+        program: "CPE" | "ISNE";
+        interests: string[];
+        emails: string[];
+      }>;
+
+      const student = await prisma.student.findUnique({
+        where: { studentId },
+      });
+
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: "ไม่เจอนักเรียน",
+        });
+      }
+
+      const role = req.user?.role;
+      const userStudentId = req.user?.studentId;
+
+      if (role === "STUDENT" && userStudentId !== studentId) {
+        return res.status(403).json({
+          success: false,
+          message: "แก้ของนักเรียนคนอื่นไม่ได้",
+        });
+      }
+
+      const updatedStudent = await prisma.student.update({
+        where: { studentId },
+        data: updates,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "แก้ไขเรีบยร้อยแล้ว",
+        data: updatedStudent,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Something is wrong, please try again",
+        error: err,
+      });
+    }
+  },
+);
+
+router.delete(
+  "/",
+  authenticateToken,
+  checkRoleAdmin,
+  async (req: CustomRequest, res: Response) => {
+    try {
+      const body =
+        typeof req.body === "object" && "studentId" in req.body
+          ? req.body.studentId
+          : req.body;
+
+      const parsed = zStudentId.safeParse(body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: parsed.error.issues,
+        });
+      }
+
+      const studentId = parsed.data;
+
+      const student = await prisma.student.findUnique({ where: { studentId } });
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: "ไม่เจอนักเรียน",
+        });
+      }
+
+      const [deletedEnrollments, deletedStudent] = await prisma.$transaction([
+        prisma.enrollment.deleteMany({ where: { studentId } }),
+        prisma.student.delete({ where: { studentId } }),
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        message: "ลบนักเรียนแล้ว",
+        data: {
+          student: deletedStudent,
+          enrollmentsDeleted: deletedEnrollments.count,
+        },
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong, please try again",
         error: err,
       });
     }

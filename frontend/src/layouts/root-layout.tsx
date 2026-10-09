@@ -45,8 +45,7 @@ export default function RootLayout() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => role && getAll(role, studentId)}
-              >
+                onClick={() => role && getAll(role, studentId)}>
                 ลองใหม่
               </Button>
             </div>
@@ -62,7 +61,7 @@ export default function RootLayout() {
           ระบบลงทะเบียนเรียน{" "}
           {role === "ADMIN"
             ? "ฝั่งผู้ดูแลระบบ"
-            : "ฝั่งนักศึกษา จัดทำโดย นศ. ชื่อ-สกุล student name รหัส นศ. student id"}
+            : "ฝั่งนักศึกษา จัดทำโดย นศ. กิตติภพ อินทำ รหัส นศ. 680610656"}
         </footer>
       </SidebarInset>
     </SidebarProvider>
