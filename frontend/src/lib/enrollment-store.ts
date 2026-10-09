@@ -104,7 +104,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
   addStudent: async (student: Student): Promise<void> => {
     const formattedEmails = student.emails?.map((e) => e.address) || [];
 
-    const response = await api<Student>("/api/v3/students", {
+    const response = await api<Student>("/students", {
       method: "POST",
       body: { ...student, emails: formattedEmails },
     });
@@ -117,7 +117,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
   updateStudent: async (student: Student): Promise<void> => {
     const formattedEmails = student.emails?.map((e) => e.address) || undefined;
 
-    const updated = await api<Student>("/api/v3/students", {
+    const updated = await api<Student>("/students", {
       method: "PUT",
       body: { ...student, emails: formattedEmails },
     });
@@ -130,7 +130,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
   },
 
   removeStudent: async (studentId: string): Promise<void> => {
-    await api<void>("/api/v3/students", {
+    await api<void>("/students", {
       method: "DELETE",
       body: { studentId },
     });
@@ -183,7 +183,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
   },
 
   updateEnrollment: async (studentId, courseId, newCourseId) => {
-    const updated = await api<Enrollment>("/api/v3/enrollments", {
+    const updated = await api<Enrollment>("/enrollments", {
       method: "PUT",
       body: { studentId, courseId, newCourseId },
     });
@@ -196,7 +196,7 @@ export const useEnrollmentStore = create<EnrollmentStore>()((set) => ({
   },
 
   dropEnrollment: async (studentId, courseId) => {
-    await api<void>("/api/v3/enrollments", {
+    await api<void>("/enrollments", {
       method: "DELETE",
       body: { studentId, courseId },
     });
